@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  firstName     String?
+  lastName      String?
+  mobileNumber  String?
+  role          String         @default("USER")
+  beneficiaries Beneficiary[]
+  subscriptions Subscription[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Beneficiary {
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  relationship String
+  dob          DateTime
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  events       Event[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Event {
+  id            String      @id @default(uuid())
+  title         String
+  type          String
+  date          DateTime
+  beneficiaryId String
+  beneficiary   Beneficiary @relation(fields: [beneficiaryId], references: [id])
+  gifts         Gift[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Gift {
+  id        String   @id @default(uuid())
+  name      String
+  price     Float?
+  url       String?
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  plan      String
+  status    String   @default("ACTIVE")
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  startDate DateTime @default(now())
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid())
+  subject   String
+  message   String
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
