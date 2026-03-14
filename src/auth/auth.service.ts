@@ -3,6 +3,8 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
+import { RegisterDto } from './dto/register.dto';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -11,7 +13,8 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
-    const user = await this.usersService.findOne(email);
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await this.usersService.findOne(normalizedEmail);
     if (user && await bcrypt.compare(pass, user.password)) {
       const { password, ...result } = user;
       return result;
@@ -28,12 +31,14 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        mobileNumber: user.mobileNumber,
       },
     };
   }
 
-  async register(data: any) {
-    const existingUser = await this.usersService.findOne(data.email);
+  async register(data: RegisterDto) {
+    const normalizedEmail = data.email.trim().toLowerCase();
+    const existingUser = await this.usersService.findOne(normalizedEmail);
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
@@ -41,6 +46,8 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const user = await this.usersService.create({
       ...data,
+      email: normalizedEmail,
+      mobileNumber: data.mobileNumber.trim(),
       password: hashedPassword,
     });
 

@@ -17,7 +17,7 @@ export class EventsController {
 
   @Post()
   create(@Body() body: any) {
-    const { beneficiaryId, ...rest } = body;
+    const { beneficiaryId, userId, ...rest } = body;
     return this.eventsService.create({
       ...rest,
       beneficiary: { connect: { id: beneficiaryId } },
