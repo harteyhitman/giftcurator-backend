@@ -1,36 +1,55 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
-import { BeneficiariesService } from './beneficiaries.service';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, UseGuards } from '@nestjs/common';
 
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { BeneficiariesService } from './beneficiaries.service';
+import { CreateBeneficiaryDto } from './dto/create-beneficiary.dto';
+import { UpdateBeneficiaryDto } from './dto/update-beneficiary.dto';
+
+@UseGuards(JwtAuthGuard)
 @Controller('beneficiaries')
 export class BeneficiariesController {
   constructor(private readonly beneficiariesService: BeneficiariesService) {}
 
   @Get()
-  findAll(@Query('userId') userId: string) {
-    return this.beneficiariesService.findAll(userId);
+  findAll(@CurrentUser() user: { id: string }) {
+    return this.beneficiariesService.findAll(user.id);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.beneficiariesService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+    const beneficiary = await this.beneficiariesService.findOne(id, user.id);
+
+    if (!beneficiary) {
+      throw new NotFoundException('Beneficiary not found');
+    }
+
+    return beneficiary;
   }
 
   @Post()
-  create(@Body() body: any) {
-    const { userId, ...rest } = body;
+  create(@Body() body: CreateBeneficiaryDto, @CurrentUser() user: { id: string }) {
     return this.beneficiariesService.create({
-      ...rest,
-      user: { connect: { id: userId } },
+      ...body,
+      dob: new Date(body.dob),
+      user: { connect: { id: user.id } },
     });
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() body: any) {
-    return this.beneficiariesService.update(id, body);
+  update(
+    @Param('id') id: string,
+    @Body() body: UpdateBeneficiaryDto,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.beneficiariesService.update(id, user.id, {
+      ...body,
+      dob: body.dob ? new Date(body.dob) : undefined,
+    });
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.beneficiariesService.delete(id);
+  remove(@Param('id') id: string, @CurrentUser() user: { id: string }) {
+    return this.beneficiariesService.delete(id, user.id);
   }
 }
