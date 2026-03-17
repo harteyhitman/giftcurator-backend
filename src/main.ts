@@ -3,14 +3,16 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
+import { createCorsOriginHandler } from './cors.util';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
-  // Enable CORS for Next.js frontend
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+
   app.enableCors({
-    origin: [frontendUrl, 'https://giftcurator-app.vercel.app'],
+    origin: createCorsOriginHandler(),
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   // Global validation pipe
