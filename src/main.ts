@@ -3,11 +3,15 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
+import { validateBackendEnv } from './config/validate-env';
 import { createCorsOriginHandler } from './cors.util';
 
 async function bootstrap() {
+  validateBackendEnv();
+
   const app = await NestFactory.create(AppModule);
 
+  // localhost:3000, FRONTEND_URL, giftcurator-app.vercel.app, FRONTEND_URLS, optional *.vercel.app previews
   app.enableCors({
     origin: createCorsOriginHandler(),
     credentials: true,
